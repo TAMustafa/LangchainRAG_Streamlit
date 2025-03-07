@@ -1,6 +1,6 @@
-# AWS Certification Expert Q&A Application
+# RAG Q&A Application
 
-A Streamlit-based application that leverages LangChain and OpenAI to create an intelligent Q&A system for AWS certification topics. The application processes PDF documentation and provides accurate, context-aware responses to user questions.
+A Streamlit-based application that leverages LangChain and OpenAI to create an intelligent RAG Q&A system based on provided data. The application processes PDF documentation and provides accurate, context-aware responses to user questions.
 
 ## Features
 
