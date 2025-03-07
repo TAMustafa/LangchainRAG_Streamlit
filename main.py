@@ -15,16 +15,18 @@ if not os.environ.get("OPENAI_API_KEY"):
     raise ValueError("OPENAI_API_KEY not found in environment variables")
 
 # Constants
-FILE_PATH = "./data/Data_Engineer.pdf"
+FILE_PATH = "./data/Prince2_2017Edition.pdf"
 DB_PATH = "db/chroma"
 
-# Document Loading & Processing
+# Use resource caching for unserializable objects
+@st.cache_resource(show_spinner=False)
 def get_vector_store():
     loader = PyPDFLoader(FILE_PATH)
     documents = loader.load()
+    # Adjusted parameters for fewer, larger chunks
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=2000,        # Increased chunk size
+        chunk_overlap=200,      # Reduced overlap
         length_function=len,
         add_start_index=True,
     )
@@ -38,7 +40,7 @@ def get_vector_store():
         persist_directory=DB_PATH
     )
 
-# Initialize components
+# Lazy initialization of vector store
 vector_store = get_vector_store()
 retriever = vector_store.as_retriever(
     search_type="similarity_score_threshold",
@@ -71,18 +73,31 @@ chain = (
     | StrOutputParser()
 )
 
-# Streamlit App
 def main():
-    st.title("AWS Certification Expert Q&A")
-    query = st.text_input("Enter your question:")
-    if st.button("Submit"):
-        if query:
-            with st.spinner("Processing..."):
-                response = chain.invoke(query)
-            st.markdown("**Answer:**")
-            st.write(response)
-        else:
-            st.write("Please enter a question.")
+    st.title("Prince2 (2017) Q&A")
+
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # User input
+    query = st.chat_input("Ask a question about Prince2 (2017)...")
+    if query:
+        st.session_state.messages.append({"role": "user", "content": query})
+        with st.chat_message("user"):
+            st.markdown(query)
+
+        with st.spinner("Processing..."):
+            response = chain.invoke(query)
+
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        with st.chat_message("assistant"):
+            st.markdown(response)
 
 if __name__ == '__main__':
     main()
